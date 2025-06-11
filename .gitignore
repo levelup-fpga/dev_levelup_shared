@@ -1,0 +1,40 @@
+#Specific -------------------------------------------------------------------------
+SOFT/ARDUINO/basic_iot_imu/imu_to_tcp/my_wifi.h
+DOC/
+#Misc -----------------------------------------------------------------------------
+*.log
+*.bak
+*.rpt
+#QT ---------------------------------------------------------------------------
+**/build/
+#Quartus --------------------------------------------------------------------------
+**/db/
+**/incremental_db/
+**/output_files/
+**/simulation/
+*.qws
+*.jic
+*.map
+#Python ---------------------------------------------------------------------------
+**/__pycache__/
+#Modelsim ---------------------------------------------------------------------------
+**/sim/work/*
+*.wlf
+transcript
+#Xilinx ---------------------------------------------------------------------------
+**/*.cache/*
+**/*.hw/*
+**/*.runs/*
+**/*.gen/*
+*.jou
+#HARD CODED..... TO improve -------------------------------------------------------
+FPGA/RTL/bus_stuff/simpleBus/sim/work/
+FPGA/RTL/bus_stuff/simpleBus/sim/wlftahzgnj
+FPGA/RTL/bus_stuff/simpleBus/sim/wlftez2t1j
+FPGA/RTL/bus_stuff/simpleBus/sim/wlftf5c5ea
+FPGA/RTL/bus_stuff/simpleBus/sim/wlftmnn14y
+FPGA/RTL/bus_stuff/simpleBus/sim/wlftr127sd
+FPGA/RTL/bus_stuff/simpleBus/sim/wlftrc16ts
+FPGA/RTL/bus_stuff/simpleBus/sim/wlftv32ayg
+FPGA/RTL/bus_stuff/simpleBus/sim/wlft1dhsbx
+FPGA/RTL/bus_stuff/simpleBus/sim/wlft9trr1a

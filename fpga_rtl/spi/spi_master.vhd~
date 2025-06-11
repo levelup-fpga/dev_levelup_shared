@@ -1,0 +1,556 @@
+
+--------------------------------------------------------------------------------
+-- Company      :   LevelUp FPGA Design
+-- Engineer     :   Guillaume VANROYEN
+--
+-- Create Date  :   20/03/2023
+-- Module Name  :   spi_master
+-- Project Name :   NA
+-- Description  :   SPI master
+--
+-- Dependencies :   NA
+--
+--
+--
+-- Revision
+-- v1 -- 20/03/2023 -- creation
+-------------------------------------------------------------------------------
+
+
+
+-------------------------------------------------------------------------------
+-- DEPENDANCES
+-------------------------------------------------------------------------------
+LIBRARY IEEE;
+USE ieee.std_logic_1164.all;
+USE ieee.std_logic_arith.all;
+USE ieee.std_logic_unsigned.all;
+
+
+-------------------------------------------------------------------------------
+-- DECLARATION DE L'INTERFACE DE L'ENTITE
+-------------------------------------------------------------------------------
+entity spi_master IS
+    generic( --TODO CPOL and CPHA, actual IS "11"
+            g_spi_max_lgt   : integer     := 8
+     );
+   PORT(
+            rst_n           : in std_logic;
+
+            -- system control
+            sys_clk         : in  std_logic; --100MHz clock
+
+            sys_start_p     : in  std_logic; -- not taken in acount if spi is busy
+            sys_cmd         : in  std_logic_vector(7 downto 0); -- RW + reg addr
+            sys_trans_lgt   : in  std_logic_vector(g_spi_max_lgt-1 downto 0); -- max 256, must include cmd byte (to transfer 4 bytes must be set to 5)
+
+            sys_done_p      : out std_logic;
+            sys_busy        : out std_logic;
+
+            sys_txd_rd_p    : out std_logic;
+            sys_txd         : in  std_logic_vector(7 downto 0); -- must be valid 1 clock cycle after rd_p
+
+            sys_rxd_dv_p    : out std_logic;
+            sys_rxd         : out std_logic_vector(7 downto 0); -- must be valid 1 clock cycle after rd_p
+
+            -- spi_bus
+            spi_cs          : out std_logic;
+            spi_clk         : out std_logic; --10 MHz
+            spi_mosi        : out std_logic;
+            spi_miso        : in  std_logic
+
+       );
+end spi_master;
+
+architecture rtl of spi_master is
+
+-------------------------------------------------------------------------------
+-- DECLARATION DE CONSTANTES DE TYPAGE
+-------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------
+-- DECLARATION DE CONSTANTES FONCTIONNELLES
+-------------------------------------------------------------------------------
+
+-- DONT TOUCH, FOR DEV ADJUSMENTS ONLY VALUES OK
+constant c_CLK_DIV_CPT_LGT  : integer := 4;
+constant c_PERIODE          : std_logic_vector(c_CLK_DIV_CPT_LGT-1 downto 0) := X"9";
+constant c_HALF_PERIODE     : std_logic_vector(c_CLK_DIV_CPT_LGT-1 downto 0) := X"4";
+
+constant c_8BIT_CPT_LGT     : integer := 4;
+constant c_8BIT_SENT        : std_logic_vector(c_8BIT_CPT_LGT-1 downto 0) := X"8";
+constant c_READ_NEXT_DATA   : std_logic_vector(c_8BIT_CPT_LGT-1 downto 0) := X"6"; -- could be any during previous 8bit transfer, 6 last possible..
+
+constant c_CPT10M_TX_SR_F  : integer := 4; -- when to shift right ts shift reg (falling edge)
+constant c_CPT8B_TX_NSR_F  : integer := 0; -- dont shift on first falling edge, data already present (cmd) or load new one (txd)
+constant c_CPTLGT_TX_NSR_F : integer := 0; -- dont shift, load next data
+
+constant c_CPT10M_RX_SR_F  : integer := 9; -- when to shift right ts shift reg (falling edge)
+constant c_CPT8B_RX_NSR_F  : integer := 0; -- dont shift on first falling edge, data already present (cmd) or load new one (txd)
+constant c_CPTLGT_RX_NSR_F : integer := 0; -- dont shift, load next data
+
+constant c_CPT8B_DV_NSR_F  : integer := 1; -- dont DV on first falling edge, data already present (cmd) or load new one (txd)
+constant c_CPTLGT_RX_NSR_0 : integer := 0; -- dont shift, cmd being sent
+constant c_CPTLGT_RX_NSR_1 : integer := 1; -- dont shift, data is loading
+
+
+
+
+--OK to modify (optimise)
+-- delay on cs, spi tranferts and busy
+constant c_TRLGT_P_D       : integer := 40;
+constant c_TRLGT_CS_OK     : integer := 6;
+constant c_TRLGT_BUSY_OK   : integer := 39; --TODO adjust to minimum acceptable (lost acquisition time)
+constant c_TRLGT_DONE_OK   : integer := c_TRLGT_BUSY_OK; --TODO adjust to minimum acceptable (lost acquisition time)
+
+constant c_START_P_D       : integer := 10;
+constant c_START_SPI_OK    : integer := 8;--5
+constant c_START_CS_OK     : integer := 2;
+
+
+
+
+-------------------------------------------------------------------------------
+-- DECLARATION DE TYPES ET SOUS TYPES
+-------------------------------------------------------------------------------
+
+type t_reg is array (3 downto 0) of std_logic_vector (31 downto 0);
+
+-------------------------------------------------------------------------------
+-- DECLARATION D'ENTITES EXTERNES
+-------------------------------------------------------------------------------
+
+
+
+-------------------------------------------------------------------------------
+-- DECLARATION DES ETATS MACHINE
+-------------------------------------------------------------------------------
+
+
+
+-------------------------------------------------------------------------------
+-- DECLARATION DE SIGNAUX INTERNES
+-------------------------------------------------------------------------------
+
+
+signal s_start_p_d   : std_logic_vector(c_TRLGT_P_D-1 downto 0);
+
+-- counters -------------------
+
+signal s_cpt_10MHz      : std_logic_vector(c_CLK_DIV_CPT_LGT-1 downto 0);
+signal s_cpt_10MHz_rst  : std_logic;
+signal s_cpt_10MHz_en   : std_logic;
+signal s_cpt_10MHz_p    : std_logic;
+signal s_cpt_5MHz_p     : std_logic;
+
+signal s_cpt_8bit       : std_logic_vector(c_8BIT_CPT_LGT-1 downto 0);
+signal s_cpt_8bit_rst   : std_logic;
+signal s_cpt_8bit_en    : std_logic;
+signal s_cpt_8bit_p     : std_logic;
+
+
+signal s_cpt_trlgt       : std_logic_vector(g_spi_max_lgt-1 downto 0);
+signal s_cpt_trlgt_rst   : std_logic;
+signal s_cpt_trlgt_en    : std_logic;
+signal s_cpt_trlgt_p     : std_logic;
+signal s_cpt_trlgt_p_d   : std_logic_vector(c_TRLGT_P_D-1 downto 0);
+
+signal s_mem_sys_trans_lgt   : std_logic_vector(g_spi_max_lgt-1 downto 0); -- max 256, must include cmd byte (to transfer 4 bytes must be set to 5)
+
+
+signal s_mem_data       : std_logic_vector(7 downto 0);
+signal s_mem_rwn        : std_logic;
+signal s_txd_sr         : std_logic_vector(7 downto 0);
+signal s_rxd_sr         : std_logic_vector(7 downto 0);
+
+signal s_txd_rd_p       : std_logic;
+signal s_txd_rd_p_d1    : std_logic;
+
+signal s_rxd_dv_p       : std_logic;
+
+
+-- SPI internal ---------------
+
+signal s_spi_clk        : std_logic;
+signal s_spi_cs         : std_logic;
+signal s_sys_busy       : std_logic;
+
+
+signal s_tmp_txsr_ld : std_logic;
+signal s_tmp_txsr_sr : std_logic;
+
+signal s_tmp_rxsr_ld : std_logic;
+
+signal s_sys_rxd_dv_p : std_logic;
+
+
+
+-------------------------------------------------------------------------------
+-- CORPS DE L'ARCHITECTURE
+-------------------------------------------------------------------------------
+
+
+begin
+
+-------------------------------------------------------------------------------
+-- SIGNAUX CONSTANTS
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- INSTANCIATION DES ENTITES EXTERNES
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- PROCESS CLK
+-------------------------------------------------------------------------------
+
+--************************************************************************************************************
+-- delays and memorise  -----------------------------------------------------------
+
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_start_p_d <= (others => '0');
+    elsif rising_edge(sys_clk) then
+        s_start_p_d <= s_start_p_d(s_start_p_d'left-1 downto 0)&sys_start_p;
+    end if;
+end process;
+
+-- memorise rWn
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_mem_rwn <= '0';
+        s_mem_sys_trans_lgt <= (others => '0');
+    elsif rising_edge(sys_clk) then
+        if(sys_start_p = '1') then
+            s_mem_rwn <= sys_cmd(7);
+            s_mem_sys_trans_lgt <= sys_trans_lgt;
+        end if;
+    end if;
+end process;
+
+
+
+-- memorise data to be sent
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_txd_rd_p_d1 <= '0';
+        s_mem_data <= (others => '0');
+    elsif rising_edge(sys_clk) then
+        s_txd_rd_p_d1 <= s_txd_rd_p;
+        if(s_txd_rd_p_d1 = '1') then
+            s_mem_data <= sys_txd;
+        end if;
+    end if;
+end process;
+
+
+--*****************************************************************************************************
+-- TX SHIFT process (read from sysy transmit to spy --------------------------------------------------
+
+-- generate rd pulse
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_txd_rd_p <= '0';
+    elsif rising_edge(sys_clk) then
+        if(s_cpt_10MHz_p = '1' and s_cpt_8bit = c_READ_NEXT_DATA and s_mem_rwn = '0' and s_cpt_trlgt /= (s_mem_sys_trans_lgt - 1)) then -- TODO implements substracor, maybe extract from process
+            s_txd_rd_p <= '1';
+        else
+            s_txd_rd_p <= '0';
+        end if;
+    end if;
+end process;
+
+sys_txd_rd_p <= s_txd_rd_p;
+
+-- TX shift register
+-- memorise data to be sent
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_txd_sr <= (others => '0');
+        s_tmp_txsr_ld <= '0';
+        s_tmp_txsr_sr <= '0';
+    elsif rising_edge(sys_clk) then
+        --load cmd
+        if(sys_start_p = '1') then
+            s_txd_sr <= sys_cmd;
+            s_tmp_txsr_ld <= '1';
+            s_tmp_txsr_sr <= '0';
+        --load data
+        elsif(      s_cpt_10MHz = c_CPT10M_TX_SR_F
+                and s_cpt_8bit = c_CPT8B_TX_NSR_F
+                and s_mem_rwn = '0'
+                and s_cpt_trlgt /= c_CPTLGT_TX_NSR_F) then
+
+            s_txd_sr <= sys_txd;
+            s_tmp_txsr_ld <= '1';
+            s_tmp_txsr_sr <= '0';
+        --shift (cmd + data) if write or (cmd + '0') if read
+        elsif(          s_cpt_10MHz = c_CPT10M_TX_SR_F
+                and     (s_cpt_8bit /= c_CPT8B_TX_NSR_F
+                     or (s_cpt_8bit = c_CPT8B_TX_NSR_F and s_cpt_trlgt /= c_CPTLGT_TX_NSR_F))) then
+            s_txd_sr <= s_txd_sr(s_txd_sr'left-1 downto 0) & '0';
+            s_tmp_txsr_ld <= '0';
+            s_tmp_txsr_sr <= '1';
+        else
+            s_tmp_txsr_ld <= '0';
+            s_tmp_txsr_sr <= '0';
+        end if;
+    end if;
+end process;
+
+--************************************************************************************************************
+-- RX SHIFT processes (read from spi and transmit to system) --------------------------------------------------
+
+-- rx shift register on rising edges
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_rxd_sr    <= (others => '0');
+        s_tmp_rxsr_ld <= '0';
+    elsif rising_edge(sys_clk) then
+        if(sys_start_p = '1' or  s_cpt_trlgt_p_d(c_TRLGT_BUSY_OK) = '1') then --useless just for simulation ease
+            s_rxd_sr <= (others => '0');
+            s_tmp_rxsr_ld <= '0';
+        elsif(      s_cpt_10MHz  = c_CPT10M_RX_SR_F
+                and s_cpt_trlgt /= c_CPTLGT_RX_NSR_F
+                and s_mem_rwn = '1') then
+            s_tmp_rxsr_ld <= '1';
+            s_rxd_sr <= s_rxd_sr(s_rxd_sr'left-1 downto 0) & spi_miso;
+        else
+            s_tmp_rxsr_ld <= '0';
+        end if;
+    end if;
+end process;
+
+-- data valid to system
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_sys_rxd_dv_p <= '0';
+    elsif rising_edge(sys_clk) then
+        if(sys_start_p = '1' or  s_cpt_trlgt_p_d(c_TRLGT_BUSY_OK) = '1') then --useless just for simulation ease
+            s_sys_rxd_dv_p <= '0';
+        elsif(      s_cpt_10MHz  = c_CPT8B_DV_NSR_F
+                and s_cpt_8bit   = c_CPT8B_RX_NSR_F
+                and s_cpt_trlgt /= c_CPTLGT_RX_NSR_0
+                and s_cpt_trlgt /= c_CPTLGT_RX_NSR_1
+                and s_mem_rwn = '1') then
+            s_sys_rxd_dv_p <= '1';
+        else
+            s_sys_rxd_dv_p <= '0';
+        end if;
+    end if;
+end process;
+
+
+
+
+--************************************************************************************************************
+-- 3 counters : 1 for clk, on for 8bit and one for transfer length  -----------
+
+-- count 10Mhz related --------------------------------------------
+
+-- enable counter
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_cpt_10MHz_en <= '0';
+    elsif rising_edge(sys_clk) then
+        if(s_start_p_d(c_START_SPI_OK) = '1') then
+            s_cpt_10MHz_en <= '1';
+        elsif(s_cpt_trlgt_p = '1') then
+            s_cpt_10MHz_en <= '0';
+        end if;
+    end if;
+end process;
+
+s_cpt_10MHz_rst <= s_start_p_d(c_START_SPI_OK);
+
+-- count 10MHz for spi transfers (sys_clk is 100Mhz)
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_cpt_10MHz <= (others => '0');
+    elsif rising_edge(sys_clk) then
+        if(s_cpt_10MHz_rst = '1' or s_cpt_10MHz = c_PERIODE) then
+            s_cpt_10MHz <= (others => '0');
+        elsif(s_cpt_10MHz_en = '1') then
+            s_cpt_10MHz <= s_cpt_10MHz + '1';
+        end if;
+    end if;
+end process;
+
+-- pulse for half and full 10MHz periode
+s_cpt_10MHz_p <= '1' when s_cpt_10MHz = c_PERIODE                                   else '0';
+s_cpt_5MHz_p  <= '1' when s_cpt_10MHz = c_HALF_PERIODE or s_cpt_10MHz = c_PERIODE   else '0';
+
+
+
+
+------count 8 bit related----------------------------------------
+
+-- enable counter
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_cpt_8bit_en <= '0';
+    elsif rising_edge(sys_clk) then
+        if(s_start_p_d(c_START_SPI_OK) = '1') then
+            s_cpt_8bit_en <= '1';
+        elsif(s_cpt_trlgt_p = '1') then
+            s_cpt_8bit_en <= '0';
+        end if;
+    end if;
+end process;
+
+s_cpt_8bit_rst <= s_start_p_d(c_START_SPI_OK);
+
+-- count number of bits sent (8 per byte...)
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_cpt_8bit <= (others => '0');
+    elsif rising_edge(sys_clk) then
+        if(s_cpt_8bit_rst = '1' or s_cpt_8bit = c_8BIT_SENT) then
+            s_cpt_8bit <= (others => '0');
+        elsif(s_cpt_8bit_en = '1' and s_cpt_10MHz_p = '1') then
+            s_cpt_8bit <= s_cpt_8bit + '1';
+        end if;
+    end if;
+end process;
+
+s_cpt_8bit_p <= '1' when s_cpt_8bit = c_8BIT_SENT else '0';
+
+
+------count transfer length (trlgt) bit related-------------------------------
+
+-- enable counter
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_cpt_trlgt_en <= '0';
+    elsif rising_edge(sys_clk) then
+        if(s_start_p_d(c_START_SPI_OK) = '1') then
+            s_cpt_trlgt_en <= '1';
+        elsif(s_cpt_trlgt_p = '1') then
+            s_cpt_trlgt_en <= '0';
+        end if;
+    end if;
+end process;
+
+s_cpt_trlgt_rst <= s_start_p_d(c_START_SPI_OK);
+
+-- count number of packets read or writen
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_cpt_trlgt <= (others => '0');
+    elsif rising_edge(sys_clk) then
+        if(s_cpt_trlgt_rst = '1') then
+            s_cpt_trlgt <= (others => '0');
+        elsif(s_cpt_trlgt_en = '1' and s_cpt_8bit_p = '1' and s_cpt_trlgt /= s_mem_sys_trans_lgt) then
+            s_cpt_trlgt <= s_cpt_trlgt + '1';
+        end if;
+    end if;
+end process;
+
+s_cpt_trlgt_p <= '1' when s_cpt_trlgt = s_mem_sys_trans_lgt and s_cpt_trlgt_en = '1' else '0';
+
+
+-- delays for busy and cs
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_cpt_trlgt_p_d <= (others => '0');
+    elsif rising_edge(sys_clk) then
+        if(s_start_p_d(c_START_SPI_OK) = '1') then
+            s_cpt_trlgt_p_d <= (others => '0');
+        else
+            s_cpt_trlgt_p_d <= s_cpt_trlgt_p_d(s_cpt_trlgt_p_d'left-1 downto 0)&s_cpt_trlgt_p;
+        end if;
+    end if;
+end process;
+
+
+
+
+
+
+--************************************************************************************************************
+----- SPI outputs-------------------------------------------------------------------
+
+
+spi_mosi <= s_txd_sr(7);
+
+
+sys_rxd_dv_p <= s_sys_rxd_dv_p;
+sys_rxd <= s_rxd_sr;
+
+
+--process(sys_clk,rst_n) begin
+--    if(rst_n = '0') then
+--        sys_rxd <= (others => '0');
+--        sys_rxd_dv_p <= '0';
+--    elsif rising_edge(sys_clk) then
+--        sys_rxd_dv_p <= s_sys_rxd_dv_p;
+--        if(s_sys_rxd_dv_p = '1') then
+--            sys_rxd <= s_rxd_sr;
+--        else
+--            sys_rxd <= (others => '0');
+--        end if;
+--    end if;
+--end process;
+
+
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_spi_clk <= '1';
+    elsif rising_edge(sys_clk) then
+        if(s_cpt_5MHz_p = '1') then
+            s_spi_clk <= not s_spi_clk;
+        end if;
+    end if;
+end process;
+
+spi_clk <= s_spi_clk;
+
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_spi_cs <= '1';
+    elsif rising_edge(sys_clk) then
+        if(s_start_p_d(c_START_CS_OK) = '1') then
+            s_spi_cs <= '0';
+        elsif(s_cpt_trlgt_p_d(c_TRLGT_CS_OK) = '1') then -- TODO : maybe add delay
+            s_spi_cs <= '1';
+        end if;
+    end if;
+end process;
+
+spi_cs <= s_spi_cs;
+
+
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        s_sys_busy <= '0';
+    elsif rising_edge(sys_clk) then
+        if(sys_start_p = '1') then
+            s_sys_busy <= '1';
+        elsif(s_cpt_trlgt_p_d(c_TRLGT_BUSY_OK) = '1') then -- TODO : maybe add delay
+            s_sys_busy <= '0';
+        end if;
+    end if;
+end process;
+
+sys_busy <= s_sys_busy;
+
+process(sys_clk,rst_n) begin
+    if(rst_n = '0') then
+        sys_done_p <= '0';
+    elsif rising_edge(sys_clk) then
+        if(s_cpt_trlgt_p_d(c_TRLGT_DONE_OK) = '1') then -- TODO : maybe add delay
+            sys_done_p <= '1';
+        else
+            sys_done_p <= '0';
+        end if;
+    end if;
+end process;
+
+
+
+
+
+
+
+end rtl;
