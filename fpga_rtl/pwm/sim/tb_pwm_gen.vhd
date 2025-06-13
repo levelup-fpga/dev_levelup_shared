@@ -30,9 +30,10 @@
 
 library IEEE;
 
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
+LIBRARY IEEE ;
+USE ieee.std_logic_1164.all ;
+USE ieee.std_logic_arith.all ;
+USE ieee.std_logic_unsigned.all ;
 
 use STD.textio.all;
 use ieee.std_logic_textio.all;
@@ -64,7 +65,7 @@ component pwm_gen is
    PORT(
            sys_clk         : in std_logic;
            rst_n           : in std_logic;
-           duty_cycle      : in integer range 0 to 100;
+           duty_cycle      : in std_logic_vector(7 downto 0); --accomodates integer range 0 to 100;
            end_of_cycle_p  : out std_logic; -- indicates an end of cycle, can be used tu update duty cycle in sync
            pwm_out         : out std_logic
        );
@@ -110,7 +111,7 @@ signal s_stop_condition  : boolean := false;
 
 signal s_rst_n           : std_logic := '0';
 signal s_sys_clk         : std_logic := '0';
-signal s_duty_cycle      : integer   := 0  ;
+signal s_duty_cycle      : std_logic_vector(7 downto 0);
 signal s_end_of_cycle_p  : std_logic := '0';
 signal s_pwm_out         : std_logic := '0';
 
@@ -162,30 +163,30 @@ u_pwm_gen : pwm_gen
 p_sys_cmd : process
 begin
 
-    s_duty_cycle <= 5;
+    s_duty_cycle <= (others =>'0');
 
     wait until rising_edge(s_sys_clk) and s_rst_n = '1';
-    wait for c_WAIT;wait until rising_edge(s_sys_clk);
-	s_duty_cycle <= 5;
-	wait for c_WAIT;wait until rising_edge(s_sys_clk);
-	s_duty_cycle <= 0;
-	wait for c_WAIT;wait until rising_edge(s_sys_clk);
-	s_duty_cycle <= 25;
-	wait for c_WAIT;wait until rising_edge(s_sys_clk);
-	s_duty_cycle <= 1;
-	wait for c_WAIT;wait until rising_edge(s_sys_clk);
-	s_duty_cycle <= 2;
-	wait for c_WAIT;wait until rising_edge(s_sys_clk);
-	s_duty_cycle <= 3;
-	wait for c_WAIT;wait until rising_edge(s_sys_clk);
-	s_duty_cycle <= 50;
-	wait for c_WAIT;wait until rising_edge(s_sys_clk);
-	s_duty_cycle <= 99;
-	wait for c_WAIT;wait until rising_edge(s_sys_clk);
-	s_duty_cycle <= 75;
-	wait for c_WAIT;wait until rising_edge(s_sys_clk);
-	s_duty_cycle <= 100;
-	wait for c_WAIT;wait until rising_edge(s_sys_clk);
+    wait for c_WAIT;wait until rising_edge(s_sys_clk) and s_end_of_cycle_p = '1';
+	s_duty_cycle <= conv_std_logic_vector(5,s_duty_cycle'length);
+	wait for c_WAIT;wait until rising_edge(s_sys_clk) and s_end_of_cycle_p = '1';
+	s_duty_cycle <= conv_std_logic_vector(0,s_duty_cycle'length);
+	wait for c_WAIT;wait until rising_edge(s_sys_clk) and s_end_of_cycle_p = '1';
+	s_duty_cycle <= conv_std_logic_vector(25,s_duty_cycle'length);
+	wait for c_WAIT;wait until rising_edge(s_sys_clk) and s_end_of_cycle_p = '1';
+	s_duty_cycle <= conv_std_logic_vector(1,s_duty_cycle'length);
+	wait for c_WAIT;wait until rising_edge(s_sys_clk) and s_end_of_cycle_p = '1';
+	s_duty_cycle <= conv_std_logic_vector(2,s_duty_cycle'length);
+	wait for c_WAIT;wait until rising_edge(s_sys_clk) and s_end_of_cycle_p = '1';
+	s_duty_cycle <= conv_std_logic_vector(3,s_duty_cycle'length);
+	wait for c_WAIT;wait until rising_edge(s_sys_clk) and s_end_of_cycle_p = '1';
+	s_duty_cycle <= conv_std_logic_vector(50,s_duty_cycle'length);
+	wait for c_WAIT;wait until rising_edge(s_sys_clk) and s_end_of_cycle_p = '1';
+	s_duty_cycle <= conv_std_logic_vector(99,s_duty_cycle'length);
+	wait for c_WAIT;wait until rising_edge(s_sys_clk) and s_end_of_cycle_p = '1';
+	s_duty_cycle <= conv_std_logic_vector(75,s_duty_cycle'length);
+	wait for c_WAIT;wait until rising_edge(s_sys_clk) and s_end_of_cycle_p = '1';
+	s_duty_cycle <= conv_std_logic_vector(100,s_duty_cycle'length);
+	wait for c_WAIT;wait until rising_edge(s_sys_clk) and s_end_of_cycle_p = '1';
 
 
 

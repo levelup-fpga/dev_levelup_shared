@@ -36,7 +36,7 @@ entity pwm_gen IS
    PORT(
            sys_clk         : in std_logic;
            rst_n           : in std_logic;
-           duty_cycle      : in integer range 0 to 100;
+           duty_cycle      : in std_logic_vector(7 downto 0); --accomodates integer range 0 to 100;
            end_of_cycle_p  : out std_logic; -- indicates an end of cycle, can be used tu update duty cycle in sync
            pwm_out         : out std_logic
        );
@@ -46,13 +46,12 @@ ARCHITECTURE behave OF pwm_gen IS
 
 constant c_100_PERCENT : integer := 100;
 
-constant c_100_VEC     : std_logic_vector(log2(c_100_PERCENT) downto 0) := conv_std_logic_vector(100,log2(c_100_PERCENT) +1);
-constant c_000_VEC     : std_logic_vector(log2(c_100_PERCENT) downto 0) := (others => '0');
+constant c_100_VEC     : std_logic_vector(7 downto 0) := conv_std_logic_vector(100,8);
+constant c_000_VEC     : std_logic_vector(7 downto 0) := (others => '0');
 
 
 signal s_prescale_cpt   : std_logic_vector(log2(g_prescale_div-1) downto 0);
-signal s_pwm_cpt        : std_logic_vector(log2(c_100_PERCENT) downto 0);
-signal s_duty_cycle_vec : std_logic_vector(log2(c_100_PERCENT) downto 0);
+signal s_pwm_cpt        : std_logic_vector(7 downto 0);
 
 
 
@@ -85,7 +84,7 @@ begin
 	if(rst_n = '0')then
 		s_pwm_cpt    <= (others => '0');
 	elsif(sys_clk'event and sys_clk='1') then
-		if(s_pwm_cpt = c_100_PERCENT) then
+		if(s_pwm_cpt = c_100_VEC) then
 			s_pwm_cpt <= (others => '0');
 		elsif(s_prescale_cpt = g_prescale_div-1) then
 			s_pwm_cpt <= s_pwm_cpt + 1;
@@ -108,21 +107,18 @@ end process;
 
 
 
-s_duty_cycle_vec <= conv_std_logic_vector(duty_cycle,s_duty_cycle_vec'length);
-
-
 process(sys_clk,rst_n)
 begin
 	if(rst_n = '0')then
 		pwm_out <= '0';
 	elsif(sys_clk'event and sys_clk='1') then
-		if(s_duty_cycle_vec = c_000_VEC) then
+		if(duty_cycle = c_000_VEC) then
 			pwm_out <= '0';
-        elsif(s_duty_cycle_vec = c_100_VEC) then
+        elsif(duty_cycle = c_100_VEC) then
 			pwm_out <= '1';
-		elsif(s_pwm_cpt = s_duty_cycle_vec and s_prescale_cpt = 0) then
+		elsif(s_pwm_cpt = duty_cycle and s_prescale_cpt = c_000_VEC) then
 			pwm_out <= '0';
-        elsif(s_pwm_cpt = c_100_PERCENT and s_prescale_cpt = 0) then
+        elsif(s_pwm_cpt = c_100_VEC  and s_prescale_cpt = c_000_VEC) then
 			pwm_out <= '1';
 		end if;
 	end if;
