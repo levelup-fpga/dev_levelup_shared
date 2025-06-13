@@ -35,7 +35,8 @@ USE ieee.std_logic_unsigned.all;
 -------------------------------------------------------------------------------
 entity led_k2000_reg_rw IS
     generic(
-            g_data_width        : integer   := 8
+            g_enable_dimmers    : boolean   := false;
+            g_data_width        : integer   := 8 --max 32
      );
    PORT(
            clk           : in std_logic;
@@ -88,12 +89,14 @@ type t_reg is array (3 downto 0) of std_logic_vector (31 downto 0);
 
 
 signal s_reg            : t_reg;
-alias  a_led_mode       : std_logic_vector(1 downto 0)  is s_reg(0)(1 downto 0);
-alias  a_led_pol        : std_logic                     is s_reg(0)(8);
 
-alias  a_led_value  : std_logic_vector(31 downto 0) is s_reg(1);
-alias  a_cpt_match  : std_logic_vector(31 downto 0) is s_reg(2);
---signal s_cpt_match  : std_logic_vector(31 downto 0);
+alias  a_reg_led_mode       : std_logic_vector(1 downto 0)  is s_reg(0)(1 downto 0); --00 k2000 01 cpt 10 fixex  11 switch
+alias  a_reg_led_pol        : std_logic                     is s_reg(0)(8);
+
+alias  a_reg_led_value  : std_logic_vector(31 downto 0) is s_reg(1);  --Fied led value
+alias  a_reg_cpt_match  : std_logic_vector(31 downto 0) is s_reg(2);  --Frequency at witch leds switch values
+
+
 
 
 signal s_cpt_shift      : std_logic_vector(31 downto 0);
@@ -168,8 +171,8 @@ begin
         s_cpt_shift    <= (others => '0');
         --s_cpt_match    <= (others => '0');
     elsif(clk'event and clk='1') then
-        --s_cpt_match <= a_cpt_match;
-        if(s_cpt_shift = a_cpt_match or reg_wr = '1') then
+        --s_cpt_match <= a_reg_cpt_match;
+        if(s_cpt_shift = a_reg_cpt_match or reg_wr = '1') then
             s_cpt_shift <= (others => '0');
         else
             s_cpt_shift <= s_cpt_shift + 1;
@@ -199,7 +202,7 @@ begin
         s_led_out_k2000(s_led_out'left downto 1)    <= (others => '0');
         s_led_out_k2000(0) <= '1';
     elsif(clk'event and clk='1') then
-        if(s_cpt_shift = a_cpt_match) then
+        if(s_cpt_shift = a_reg_cpt_match) then
             if(s_shift_RnL = '0') then
                 s_led_out_k2000 <= s_led_out_k2000(s_led_out_k2000'left-1 downto 0) & s_led_out_k2000(s_led_out_k2000'left);
             elsif(s_shift_RnL = '1') then
@@ -216,7 +219,7 @@ begin
     if(rst_n = '0')then
         s_led_out_cpt   <= (others => '0');
     elsif(clk'event and clk='1') then
-        if(s_cpt_shift = a_cpt_match) then
+        if(s_cpt_shift = a_reg_cpt_match) then
             s_led_out_cpt <= s_led_out_cpt + 1;
         end if;
     end if;
@@ -225,11 +228,11 @@ end process;
 
 -- mux outputs
 
-s_led_out <=    s_led_out_k2000 when a_led_mode = "00" else
-                s_led_out_cpt   when a_led_mode = "01" else
-                a_led_value(g_data_width-1 downto 0);
+s_led_out <=    s_led_out_k2000 when a_reg_led_mode = "00" else
+                s_led_out_cpt   when a_reg_led_mode = "01" else
+                a_reg_led_value(g_data_width-1 downto 0);
 
-led_out <= s_led_out when a_led_pol = '0' else not s_led_out;
+led_out <= s_led_out when a_reg_led_pol = '0' else not s_led_out;
 
 
 end rtl;
