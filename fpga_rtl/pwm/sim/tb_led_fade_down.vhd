@@ -90,9 +90,9 @@ end component;
 constant c_GBL_CLK_PERIOD       : time :=  10 ns;
 constant c_RST_DURATION         : time :=  10 us;
 
-constant c_WAIT                 : time :=  5 ms;
-constant c_PRESCALE_DIV         : integer := 10; --output-pwm frequency = 100*(clk_frequency/g_prescale_cycles)
-constant c_FADE_STEP_CPT        : integer := 10; --output-pwm frequency = 100*(clk_frequency/g_prescale_cycles)
+constant c_WAIT                 : time :=  20 ms;
+constant c_PRESCALE_DIV         : integer := 50; --output-pwm frequency = 100*(clk_frequency/g_prescale_cycles)
+constant c_FADE_STEP_CPT        : integer := 2; --number of pwm cycles before changing fade level (level is between 0 to 100% brighness)
 
 
 -------------------------------------------------------------------------------
@@ -165,23 +165,16 @@ begin
 
     wait until rising_edge(s_sys_clk) and s_rst_n = '1';
 
-
-
-    wait for c_WAIT     ;wait until rising_edge(s_sys_clk);
     s_led_in <= '1'       ; wait until rising_edge(s_sys_clk);s_led_in <= '0';
-
     wait for c_WAIT     ;wait until rising_edge(s_sys_clk);
+
     s_led_in <= '1'       ; wait until rising_edge(s_sys_clk);s_led_in <= '0';
-
     wait for c_WAIT     ;wait until rising_edge(s_sys_clk);
+
     s_led_in <= '1'       ; wait until rising_edge(s_sys_clk);s_led_in <= '0';
-
-
-
-
-
-
     wait for c_WAIT     ;wait until rising_edge(s_sys_clk);
+
+
     s_stop_condition <= true;
 
 

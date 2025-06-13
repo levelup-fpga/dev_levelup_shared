@@ -115,7 +115,7 @@ begin
 	if(rst_n = '0')then
 		s_dec_fade_p    <= '0';
 	elsif(sys_clk'event and sys_clk='1') then
-		if(s_end_of_cycle_p = '1' and s_fade_step_cpt = g_fade_step_cpt) then
+		if(s_end_of_cycle_p = '1' and s_fade_step_cpt = g_fade_step_cpt-1) then
 			s_dec_fade_p    <= '1';
 		else
 			s_dec_fade_p    <= '0';
