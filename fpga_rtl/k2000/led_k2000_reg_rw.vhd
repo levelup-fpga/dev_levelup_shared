@@ -35,7 +35,7 @@ USE ieee.std_logic_unsigned.all;
 -------------------------------------------------------------------------------
 entity led_k2000_reg_rw IS
     generic(
-            g_enable_dimmers    : boolean   := false;
+            g_enable_dimmers    : boolean   := false; -- not implemented
             g_data_width        : integer   := 8 --max 32
      );
    PORT(
@@ -90,7 +90,7 @@ type t_reg is array (3 downto 0) of std_logic_vector (31 downto 0);
 
 signal s_reg            : t_reg;
 
-alias  a_reg_led_mode       : std_logic_vector(1 downto 0)  is s_reg(0)(1 downto 0); --00 k2000 01 cpt 10 fixex  11 switch
+alias  a_reg_led_mode       : std_logic_vector(1 downto 0)  is s_reg(0)(1 downto 0); --00 k2000 01 cpt 10 fixex  11 switch (11 not implemented)
 alias  a_reg_led_pol        : std_logic                     is s_reg(0)(8);
 
 alias  a_reg_led_value  : std_logic_vector(31 downto 0) is s_reg(1);  --Fied led value
