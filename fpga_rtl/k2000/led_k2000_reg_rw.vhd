@@ -36,7 +36,7 @@ USE ieee.std_logic_unsigned.all;
 entity led_k2000_reg_rw IS
     generic(
             g_enable_dimmers    : boolean   := false; -- not implemented
-            g_data_width        : integer   := 8 --max 32
+            g_data_width        : integer   := 8 --max 32 TODO add range or assert
      );
    PORT(
            clk           : in std_logic;
