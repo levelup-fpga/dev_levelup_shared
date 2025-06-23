@@ -220,7 +220,7 @@ constant c_RST_DURATION         : time :=  10 us;
 -- DESIGN DEPENDENT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 -- peripheral addr range (no worry's, CS is managed by Xbar)
-constant c_RAM_ADDR_WIDTH       : integer := 9;
+constant c_RAM_ADDR_WIDTH       : integer := 10;
 constant c_LED_ADDR_WIDTH       : integer := 2;
 
 
@@ -668,11 +668,34 @@ begin
     s_tx_data32(8) <= X"DA080808";
     wait until rising_edge(s_sys_clk);
 
-    proc_data_transfer("W",c_SLV01,X"000008",3);
-    proc_data_transfer("W",c_SLV02,X"000001",3);
+    proc_data_transfer("W",c_SLV01,X"000002",5);
+    proc_data_transfer("R",c_SLV01,X"000002",3); --TODO : BUG IN SPI MASTER/TB_PROC : TO fix (first read ok next write ko) most likly in tb procedures ...
+    proc_data_transfer("W",c_SLV01,X"0000A0",8);
+    proc_data_transfer("R",c_SLV01,X"0000A0",3); --TODO : BUG IN SPI MASTER/TB_PROC : to fix (first read ok next write ko)
+
+    --proc_data_transfer("W",c_SLV01,X"000002",5);
+    --proc_data_transfer("W",c_SLV01,X"0000A0",8);
+    --proc_data_transfer("R",c_SLV01,X"000001",20); --TODO : BUG IN SPI MASTER/TB_PROC : to fix (first read ok next write ko)
+
+
+
+
+   --fill data to send
+    s_tx_data32(0) <= X"DB010101";
+    s_tx_data32(1) <= X"DB020202";
+    s_tx_data32(2) <= X"DB030303";
+    s_tx_data32(3) <= X"DB040404";
+    s_tx_data32(4) <= X"DB050505";
+    s_tx_data32(5) <= X"DB060606";
+    s_tx_data32(6) <= X"DB060606";
+    s_tx_data32(7) <= X"DB070707";
+    s_tx_data32(8) <= X"DB080808";
+    wait until rising_edge(s_sys_clk);
+
+    proc_data_transfer("W",c_SLV01,X"000001",8);
+    proc_data_transfer("R",c_SLV01,X"000001",8);
     wait for c_RST_DURATION*6;
-    --proc_data_transfer("R",c_SLV01,X"000099",3); --BOG IN SPI MASTER : to fix (first read ok newt write ko)
-    --proc_data_transfer("W",c_SLV01,X"000099",3);
+
 
 
     -- end of test----------------------------------------------------

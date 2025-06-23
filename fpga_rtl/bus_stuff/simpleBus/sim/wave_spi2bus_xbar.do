@@ -16,7 +16,7 @@ add wave -noupdate -group spi_master -radix hexadecimal /tb_spi2bus_xbar/u_spi_m
 add wave -noupdate -group spi_master -radix hexadecimal /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/spi_clk
 add wave -noupdate -group spi_master -radix hexadecimal /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/spi_mosi
 add wave -noupdate -group spi_master -radix hexadecimal /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/spi_miso
-add wave -noupdate -group spi_master -radix hexadecimal -childformat {{/tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(3) -radix hexadecimal} {/tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(2) -radix hexadecimal} {/tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(1) -radix hexadecimal} {/tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(0) -radix hexadecimal}} -expand -subitemconfig {/tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(3) {-height 14 -radix hexadecimal} /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(2) {-height 14 -radix hexadecimal} /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(1) {-height 14 -radix hexadecimal} /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(0) {-height 14 -radix hexadecimal}} /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg
+add wave -noupdate -group spi_master -radix hexadecimal -childformat {{/tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(3) -radix hexadecimal} {/tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(2) -radix hexadecimal} {/tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(1) -radix hexadecimal} {/tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(0) -radix hexadecimal}} -expand -subitemconfig {/tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(3) {-height 15 -radix hexadecimal} /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(2) {-height 15 -radix hexadecimal} /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(1) {-height 15 -radix hexadecimal} /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg(0) {-height 15 -radix hexadecimal}} /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_reg
 add wave -noupdate -group spi_master -radix hexadecimal /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_fifo_wr_p
 add wave -noupdate -group spi_master -radix hexadecimal /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_fifo_rd_p
 add wave -noupdate -group spi_master -radix hexadecimal /tb_spi2bus_xbar/u_spi_master_gen_fifo_reg_mm/s_sys_done_p
@@ -101,27 +101,36 @@ add wave -noupdate -group spi2bus -radix hexadecimal /tb_spi2bus_xbar/u_spi2bus/
 add wave -noupdate -group spi2bus -radix hexadecimal /tb_spi2bus_xbar/u_spi2bus/c_ADR2_POS
 add wave -noupdate -group spi2bus -radix hexadecimal /tb_spi2bus_xbar/u_spi2bus/c_ADR1_POS
 add wave -noupdate -group spi2bus -radix hexadecimal /tb_spi2bus_xbar/u_spi2bus/c_ADR0_POS
-add wave -noupdate -group RAM_1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/g_RAM_ADDR_WIDTH
-add wave -noupdate -group RAM_1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/clk_sys
-add wave -noupdate -group RAM_1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/addr
-add wave -noupdate -group RAM_1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/writeEn
-add wave -noupdate -group RAM_1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/dataIn
-add wave -noupdate -group RAM_1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/readEn
-add wave -noupdate -group RAM_1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/readRdy
-add wave -noupdate -group RAM_1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/dataOut
-add wave -noupdate -group RAM_1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/s_readEn
-add wave -noupdate -expand -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/g_LED_WIDTH
-add wave -noupdate -expand -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/rst_n
-add wave -noupdate -expand -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/clk_sys
-add wave -noupdate -expand -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/addr
-add wave -noupdate -expand -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/writeEn
-add wave -noupdate -expand -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/dataIn
-add wave -noupdate -expand -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/readEn
-add wave -noupdate -expand -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/readRdy
-add wave -noupdate -expand -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/dataOut
-add wave -noupdate -expand -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/led_out
+add wave -noupdate -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/g_LED_WIDTH
+add wave -noupdate -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/rst_n
+add wave -noupdate -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/clk_sys
+add wave -noupdate -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/addr
+add wave -noupdate -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/writeEn
+add wave -noupdate -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/dataIn
+add wave -noupdate -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/readEn
+add wave -noupdate -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/readRdy
+add wave -noupdate -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/dataOut
+add wave -noupdate -group k2000 -radix hexadecimal /tb_spi2bus_xbar/u_bus2k2000/led_out
+add wave -noupdate -group ram1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/g_RAM_ADDR_WIDTH
+add wave -noupdate -group ram1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/clk_sys
+add wave -noupdate -group ram1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/addr
+add wave -noupdate -group ram1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/writeEn
+add wave -noupdate -group ram1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/dataIn
+add wave -noupdate -group ram1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/readEn
+add wave -noupdate -group ram1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/readRdy
+add wave -noupdate -group ram1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/dataOut
+add wave -noupdate -group ram1 -radix hexadecimal /tb_spi2bus_xbar/u1_bus2bram/s_readEn
+add wave -noupdate -expand -group ram2 -radix hexadecimal /tb_spi2bus_xbar/u2_bus2bram/addr
+add wave -noupdate -expand -group ram2 -radix hexadecimal /tb_spi2bus_xbar/u2_bus2bram/clk_sys
+add wave -noupdate -expand -group ram2 -radix hexadecimal /tb_spi2bus_xbar/u2_bus2bram/dataIn
+add wave -noupdate -expand -group ram2 -radix hexadecimal /tb_spi2bus_xbar/u2_bus2bram/dataOut
+add wave -noupdate -expand -group ram2 -radix hexadecimal /tb_spi2bus_xbar/u2_bus2bram/g_RAM_ADDR_WIDTH
+add wave -noupdate -expand -group ram2 -radix hexadecimal /tb_spi2bus_xbar/u2_bus2bram/readEn
+add wave -noupdate -expand -group ram2 -radix hexadecimal /tb_spi2bus_xbar/u2_bus2bram/readRdy
+add wave -noupdate -expand -group ram2 -radix hexadecimal /tb_spi2bus_xbar/u2_bus2bram/s_readEn
+add wave -noupdate -expand -group ram2 -radix hexadecimal /tb_spi2bus_xbar/u2_bus2bram/writeEn
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {195308 ns} 0}
+WaveRestoreCursors {{Cursor 1} {388565 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 150
 configure wave -valuecolwidth 100
@@ -137,4 +146,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {91425 ns} {679900 ns}
+WaveRestoreZoom {0 ns} {3050389 ns}
