@@ -27,6 +27,9 @@ transcript
 **/*.runs/*
 **/*.gen/*
 *.jou
+#Py tmp files imported from wave_gen prj
+**/py_generated_wave/samples/*
+**/py_generated_wave/tmp_py/*
 #HARD CODED..... TO improve -------------------------------------------------------
 FPGA/RTL/bus_stuff/simpleBus/sim/work/
 FPGA/RTL/bus_stuff/simpleBus/sim/wlftahzgnj
