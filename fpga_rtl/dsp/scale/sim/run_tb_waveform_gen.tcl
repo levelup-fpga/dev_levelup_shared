@@ -33,6 +33,7 @@ vlib $WORK_LIB
 
 
 vcom -work $WORK_LIB -$VHDL_VERSION $VIEW_SCOPE -explicit   $RTL_SRC_SCA/waveform_gen.vhd
+vcom -work $WORK_LIB -$VHDL_VERSION $VIEW_SCOPE -explicit   $RTL_SRC_SCA/waveform_driver.vhd
 
 
 vcom -work $WORK_LIB -$VHDL_VERSION $VIEW_SCOPE -explicit   tb_waveform_gen.vhd

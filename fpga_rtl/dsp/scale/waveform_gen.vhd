@@ -1,7 +1,7 @@
 -- waveform_gen.vhd
--- VHDL-93 simulation model: generates waveforms (sine, triangle, saw, square)
--- Phase increment is set by SAMPLES_PER_PERIOD generic.
--- Output updates only when 'enable' is '1' at rising clock edge.
+-- Simulation-only waveform generator (sine, triangle, saw, square)
+-- Advances phase by a runtime-supplied increment when enable = '1'.
+-- Outputs are signed or unsigned (std_logic_vector).
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -10,27 +10,24 @@ use IEEE.MATH_REAL.ALL;
 
 entity waveform_gen is
   generic (
-    SAMPLE_WIDTH       : integer := 12;  -- output bit width
-    SAMPLES_PER_PERIOD : integer := 48;  -- samples in one waveform cycle
-    DEFAULT_WAVEFORM   : integer := 0;   -- 0=sine,1=triangle,2=saw,3=square
-    SIGNED_OUTPUT      : boolean := false
+    SAMPLE_WIDTH   : integer := 12;
+    DEFAULT_WAVEFORM : integer := 0;
+    SIGNED_OUTPUT  : boolean := false
   );
   port (
-    clk          : in  std_logic;
-    rst_n        : in  std_logic;             -- active low reset
-    enable       : in  std_logic := '1';
-    waveform_sel : in  integer := DEFAULT_WAVEFORM;
-    sample_out   : out std_logic_vector(SAMPLE_WIDTH-1 downto 0)
+    clk           : in  std_logic;
+    rst_n         : in  std_logic;             -- active low reset
+    enable        : in  std_logic := '1';      -- sample update enable
+    waveform_sel  : in  integer := DEFAULT_WAVEFORM; -- runtime waveform select
+    phase_inc     : in  real;                  -- phase increment (radians per sample)
+    sample_out    : out std_logic_vector(SAMPLE_WIDTH-1 downto 0)
   );
 end entity waveform_gen;
 
 architecture behavioral of waveform_gen is
   constant TWO_PI : real := 2.0 * 3.14159265358979323846;
-  constant PHASE_INC : real := TWO_PI / real(SAMPLES_PER_PERIOD);
-
   signal phase    : real := 0.0;
 
-  -- scaling constants
   constant MAX_UNSIGNED_INT : integer := 2**SAMPLE_WIDTH - 1;
   constant MAX_SIGNED_INT   : integer := 2**(SAMPLE_WIDTH-1) - 1;
   constant MIN_SIGNED_INT   : integer := -2**(SAMPLE_WIDTH-1);
@@ -49,21 +46,23 @@ begin
         sample_out <= (others => '0');
       else
         if enable = '1' then
-          -- waveform selection
+          -- waveform selection check
           if waveform_sel < 0 or waveform_sel > 3 then
             wf := DEFAULT_WAVEFORM;
           else
             wf := waveform_sel;
           end if;
 
-          -- phase increment
-          phase_next := phase + PHASE_INC;
+          -- update phase
+          phase_next := phase + phase_inc;
           if phase_next >= TWO_PI then
             phase_next := phase_next - TWO_PI * floor(phase_next / TWO_PI);
+          elsif phase_next < 0.0 then
+            phase_next := phase_next + TWO_PI * (1.0 + floor(-phase_next / TWO_PI));
           end if;
           phase <= phase_next;
 
-          -- waveform in [-1.0 .. +1.0]
+          -- compute waveform in [-1, +1]
           case wf is
             when 0 =>  -- SINE
               val_real := sin(phase);
@@ -85,7 +84,7 @@ begin
               val_real := 0.0;
           end case;
 
-          -- scale to output
+          -- scale
           if SIGNED_OUTPUT then
             scaled_real := val_real * real(MAX_SIGNED_INT);
             if scaled_real > real(MAX_SIGNED_INT) then
