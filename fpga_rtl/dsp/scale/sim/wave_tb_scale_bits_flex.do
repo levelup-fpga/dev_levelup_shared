@@ -6,9 +6,9 @@ add wave -noupdate -expand -group signed -radix hexadecimal /tb_scale_bits_flex/
 add wave -noupdate -expand -group signed -radix hexadecimal /tb_scale_bits_flex/uut1/PIPELINE
 add wave -noupdate -expand -group signed -radix hexadecimal /tb_scale_bits_flex/uut1/clk
 add wave -noupdate -expand -group signed -radix hexadecimal /tb_scale_bits_flex/uut1/rst
-add wave -noupdate -expand -group signed -format Analog-Step -height 84 -max 127.0 -min -127.0 -radix sfixed /tb_scale_bits_flex/uut1/din
+add wave -noupdate -expand -group signed -format Analog-Step -height 84 -max 127.0 -min -127.0 -radix decimal /tb_scale_bits_flex/uut1/din
 add wave -noupdate -expand -group signed -radix hexadecimal /tb_scale_bits_flex/uut1/din_valid
-add wave -noupdate -expand -group signed -format Analog-Step -height 84 -max 0.99999999999999989 -min -2.0 -radix decimal -childformat {{/tb_scale_bits_flex/uut1/dout(4) -radix hexadecimal} {/tb_scale_bits_flex/uut1/dout(3) -radix hexadecimal} {/tb_scale_bits_flex/uut1/dout(2) -radix hexadecimal} {/tb_scale_bits_flex/uut1/dout(1) -radix hexadecimal} {/tb_scale_bits_flex/uut1/dout(0) -radix hexadecimal}} -subitemconfig {/tb_scale_bits_flex/uut1/dout(4) {-height 14 -radix hexadecimal} /tb_scale_bits_flex/uut1/dout(3) {-height 14 -radix hexadecimal} /tb_scale_bits_flex/uut1/dout(2) {-height 14 -radix hexadecimal} /tb_scale_bits_flex/uut1/dout(1) {-height 14 -radix hexadecimal} /tb_scale_bits_flex/uut1/dout(0) {-height 14 -radix hexadecimal}} /tb_scale_bits_flex/uut1/dout
+add wave -noupdate -expand -group signed -format Analog-Step -height 84 -max 63.0 -min -64.0 -radix decimal -childformat {{/tb_scale_bits_flex/uut1/dout(6) -radix decimal} {/tb_scale_bits_flex/uut1/dout(5) -radix decimal} {/tb_scale_bits_flex/uut1/dout(4) -radix hexadecimal} {/tb_scale_bits_flex/uut1/dout(3) -radix hexadecimal} {/tb_scale_bits_flex/uut1/dout(2) -radix hexadecimal} {/tb_scale_bits_flex/uut1/dout(1) -radix hexadecimal} {/tb_scale_bits_flex/uut1/dout(0) -radix hexadecimal}} -subitemconfig {/tb_scale_bits_flex/uut1/dout(6) {-height 14 -radix decimal} /tb_scale_bits_flex/uut1/dout(5) {-height 14 -radix decimal} /tb_scale_bits_flex/uut1/dout(4) {-height 14 -radix hexadecimal} /tb_scale_bits_flex/uut1/dout(3) {-height 14 -radix hexadecimal} /tb_scale_bits_flex/uut1/dout(2) {-height 14 -radix hexadecimal} /tb_scale_bits_flex/uut1/dout(1) {-height 14 -radix hexadecimal} /tb_scale_bits_flex/uut1/dout(0) {-height 14 -radix hexadecimal}} /tb_scale_bits_flex/uut1/dout
 add wave -noupdate -expand -group signed -radix hexadecimal /tb_scale_bits_flex/uut1/dout_valid
 add wave -noupdate -expand -group signed -radix hexadecimal /tb_scale_bits_flex/uut1/din_s
 add wave -noupdate -expand -group signed -radix hexadecimal /tb_scale_bits_flex/uut1/din_u
@@ -23,9 +23,9 @@ add wave -noupdate -expand -group unsigned -radix hexadecimal /tb_scale_bits_fle
 add wave -noupdate -expand -group unsigned -radix hexadecimal /tb_scale_bits_flex/uut2/PIPELINE
 add wave -noupdate -expand -group unsigned -radix hexadecimal /tb_scale_bits_flex/uut2/clk
 add wave -noupdate -expand -group unsigned -radix hexadecimal /tb_scale_bits_flex/uut2/rst
-add wave -noupdate -expand -group unsigned -format Analog-Step -height 84 -max 254.0 -radix unsigned /tb_scale_bits_flex/uut2/din
+add wave -noupdate -expand -group unsigned -format Analog-Step -height 84 -max 127.0 -min -127.0 -radix decimal /tb_scale_bits_flex/uut2/din
 add wave -noupdate -expand -group unsigned -radix hexadecimal /tb_scale_bits_flex/uut2/din_valid
-add wave -noupdate -expand -group unsigned -format Analog-Step -height 84 -max 3.0 -radix unsigned /tb_scale_bits_flex/uut2/dout
+add wave -noupdate -expand -group unsigned -format Analog-Step -height 84 -max 63.0 -min -64.0 -radix decimal /tb_scale_bits_flex/uut2/dout
 add wave -noupdate -expand -group unsigned -radix hexadecimal /tb_scale_bits_flex/uut2/dout_valid
 add wave -noupdate -expand -group unsigned -radix hexadecimal /tb_scale_bits_flex/uut2/din_s
 add wave -noupdate -expand -group unsigned -radix hexadecimal /tb_scale_bits_flex/uut2/din_u
@@ -35,7 +35,7 @@ add wave -noupdate -expand -group unsigned -radix hexadecimal /tb_scale_bits_fle
 add wave -noupdate -expand -group unsigned -radix hexadecimal /tb_scale_bits_flex/uut2/data_pipe
 add wave -noupdate -expand -group unsigned -radix hexadecimal /tb_scale_bits_flex/uut2/valid_pipe
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {1572 ns} 0}
+WaveRestoreCursors {{Cursor 1} {1905 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 150
 configure wave -valuecolwidth 100

@@ -9,9 +9,20 @@ end entity;
 architecture sim of tb_scale_bits_flex is
 
   -- Test configuration
-  constant N           : positive := 8;
-  constant M           : positive := 7;
+
+  constant c_SIGNED_MODE1 : boolean  := true;
+  constant c_N1           : positive := 8;
+  constant c_M1           : positive := 6;
+
+  constant c_SIGNED_MODE2 : boolean  := true;
+  constant c_N2           : positive := 19;
+  constant c_M2           : positive := 7;
+
+
+
   constant PIPELINE    : natural  := 2;
+
+
   constant CLK_PERIOD  : time := 10 ns;
   constant SAMPLES     : natural := 64; -- number of sine samples per period
   constant c_NUM_PERIODE     : natural := 5; -- number of sine samples per period
@@ -22,17 +33,20 @@ architecture sim of tb_scale_bits_flex is
 
   -- DUT signals
 
-  signal din_sin_s    : std_logic_vector(N-1 downto 0);
-  signal din_sin_u    : std_logic_vector(N-1 downto 0);
 
-  signal din_valid  : std_logic := '0';
 
-  signal din1        : std_logic_vector(N-1 downto 0);
-  signal dout1       : std_logic_vector(M-1 downto 0);
+  signal din1_valid  : std_logic := '0';
+  signal din1_sin_s  : std_logic_vector(c_N1-1 downto 0);
+  signal din1_sin_u  : std_logic_vector(c_N1-1 downto 0);
+  signal din1        : std_logic_vector(c_N1-1 downto 0);
+  signal dout1       : std_logic_vector(c_M1-1 downto 0);
   signal dout1_valid : std_logic;
 
-  signal din2        : std_logic_vector(N-1 downto 0);
-  signal dout2       : std_logic_vector(M-1 downto 0);
+  signal din2_valid  : std_logic := '0';
+  signal din2_sin_s  : std_logic_vector(c_N2-1 downto 0);
+  signal din2_sin_u  : std_logic_vector(c_N2-1 downto 0);
+  signal din2        : std_logic_vector(c_N2-1 downto 0);
+  signal dout2       : std_logic_vector(c_M2-1 downto 0);
   signal dout2_valid : std_logic;
 
 
@@ -51,42 +65,44 @@ begin
   --------------------------------------------------------------------
   uut1: entity work.scale_bits_flex
     generic map (
-      N           => N,
-      M           => M,
-      SIGNED_MODE => true,
+      N           => c_N1,
+      M           => c_M1,
+      SIGNED_MODE => c_SIGNED_MODE1,
       PIPELINE    => PIPELINE
     )
     port map (
       clk        => clk,
       rst        => rst,
       din        => din1,
-      din_valid  => din_valid,
+      din_valid  => din1_valid,
       dout       => dout1,
       dout_valid => dout1_valid
     );
 
 
+
+  din1 <= din1_sin_s;
+
   uut2: entity work.scale_bits_flex
     generic map (
-      N           => N,
-      M           => M,
-      SIGNED_MODE => false,
+      N           => c_N2,
+      M           => c_M2,
+      SIGNED_MODE => c_SIGNED_MODE2,
       PIPELINE    => PIPELINE
     )
     port map (
       clk        => clk,
       rst        => rst,
       din        => din2,
-      din_valid  => din_valid,
+      din_valid  => din2_valid,
       dout       => dout2,
       dout_valid => dout2_valid
     );
 
+    din2 <= din2_sin_s;
 
 
 
-    din1 <= din_sin_s;
-    din2 <= din_sin_u;
 
   --------------------------------------------------------------------
   -- Reset process
@@ -105,22 +121,31 @@ begin
   process
     variable i         : integer := 0;
     variable radians   : real;
-    variable amplitude : real := 2.0**(N-1) - 1.0; -- max signed amplitude
-    variable sample    : integer;
+
+    variable v_amplitude1 : real := 2.0**(c_N1-1) - 1.0; -- max signed amplitude
+    variable v_amplitude2 : real := 2.0**(c_N2-1) - 1.0; -- max signed amplitude
+    variable v_sample1    : integer;
+    variable v_sample2    : integer;
+
   begin
     wait until rst = '0';
     wait until rising_edge(clk);
-    din_valid <= '1';
+    din1_valid <= '1';
+    din2_valid <= '1';
 
     for cycle in 0 to c_NUM_PERIODE loop  -- generate a few cycles
 
 
       for i in 0 to SAMPLES-1 loop
         radians := 2.0 * math_pi * real(i) / real(SAMPLES);
-        sample  := integer(round(amplitude * sin(radians)));
+        v_sample1  := integer(round(v_amplitude1 * sin(radians)));
+        v_sample2  := integer(round(v_amplitude2 * sin(radians)));
 
-        din_sin_s <= std_logic_vector(to_signed(sample, N));
-        din_sin_u <= std_logic_vector(to_unsigned(sample + integer(amplitude), N));
+        din1_sin_s <= std_logic_vector(to_signed(v_sample1, c_N1));
+        din1_sin_u <= std_logic_vector(to_unsigned(v_sample1 + integer(v_amplitude1), c_N1));
+
+        din2_sin_s <= std_logic_vector(to_signed(v_sample2, c_N2));
+        din2_sin_u <= std_logic_vector(to_unsigned(v_sample2 + integer(v_amplitude2), c_N2));
 
         wait until rising_edge(clk);
       end loop;
@@ -129,7 +154,8 @@ begin
 
     end loop;
 
-    din_valid <= '0';
+    din1_valid <= '1';
+    din2_valid <= '1';
     wait for 10*CLK_PERIOD;
 
     report "Simulation finished." severity note;
