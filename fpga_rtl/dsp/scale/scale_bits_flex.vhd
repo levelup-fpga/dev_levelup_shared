@@ -54,17 +54,21 @@ begin
   end generate;
 
   ------------------------------------------------------------------
-  -- Scaling logic for SIGNED mode
+  -- Scaling logic for SIGNED mode (corrected downscale order)
   ------------------------------------------------------------------
   signed_scale_gen : if SIGNED_MODE generate
+
+    -- Upsize: multiply by 2^(M-N) (shift left after sign-extend)
     upsize_signed : if M > N generate
       dout_s <= shift_left(resize(din_s, M), M - N);
     end generate;
 
+    -- Downsize: divide by 2^(N-M) -> SHIFT FIRST on the N-bit value, THEN resize to M
     downsize_signed : if M < N generate
-      dout_s <= shift_right(resize(din_s, M), N - M);
+      dout_s <= resize( shift_right(din_s, N - M), M );
     end generate;
 
+    -- Same size: passthrough
     same_size_signed : if M = N generate
       dout_s <= din_s;
     end generate;
@@ -73,17 +77,21 @@ begin
   end generate;
 
   ------------------------------------------------------------------
-  -- Scaling logic for UNSIGNED mode
+  -- Scaling logic for UNSIGNED mode (corrected downscale order)
   ------------------------------------------------------------------
   unsigned_scale_gen : if not SIGNED_MODE generate
+
+    -- Upsize: multiply by 2^(M-N)
     upsize_unsigned : if M > N generate
       dout_u <= shift_left(resize(din_u, M), M - N);
     end generate;
 
+    -- Downsize: divide by 2^(N-M) -> SHIFT FIRST on the N-bit value, THEN resize
     downsize_unsigned : if M < N generate
-      dout_u <= shift_right(resize(din_u, M), N - M);
+      dout_u <= resize( shift_right(din_u, N - M), M );
     end generate;
 
+    -- Same size: passthrough
     same_size_unsigned : if M = N generate
       dout_u <= din_u;
     end generate;
@@ -97,7 +105,7 @@ begin
   dout_comb <= std_logic_vector(dout_s) when SIGNED_MODE else std_logic_vector(dout_u);
 
   ------------------------------------------------------------------
-  -- Pipeline registers
+  -- Pipeline registers (always present since PIPELINE >= 1)
   ------------------------------------------------------------------
   process(clk, rst)
   begin
@@ -105,11 +113,11 @@ begin
       data_pipe  <= (others => (others => '0'));
       valid_pipe <= (others => '0');
     elsif rising_edge(clk) then
-      -- First stage gets combinational result
+      -- First stage captures the combinational result
       data_pipe(0)  <= dout_comb;
       valid_pipe(0) <= din_valid;
 
-      -- Remaining stages shift data/valid
+      -- Remaining stages shift forward
       for i in 1 to PIPELINE-1 loop
         data_pipe(i)  <= data_pipe(i-1);
         valid_pipe(i) <= valid_pipe(i-1);
@@ -118,7 +126,7 @@ begin
   end process;
 
   ------------------------------------------------------------------
-  -- Outputs
+  -- Outputs (last pipeline stage)
   ------------------------------------------------------------------
   dout       <= data_pipe(PIPELINE-1);
   dout_valid <= valid_pipe(PIPELINE-1);

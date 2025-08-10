@@ -9,7 +9,7 @@ end entity;
 architecture sim of tb_scale_bits_flex is
 
   -- Test configuration
-  constant N           : positive := 5;
+  constant N           : positive := 8;
   constant M           : positive := 7;
   constant PIPELINE    : natural  := 2;
   constant CLK_PERIOD  : time := 10 ns;
