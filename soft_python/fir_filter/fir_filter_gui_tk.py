@@ -135,10 +135,12 @@ class FIRFilterGUI:
         plot_frame = ttk.LabelFrame(self.design_frame, text="Frequency Response", padding="10")
         plot_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Create matplotlib figure
-        self.fig = Figure(figsize=(12, 6), dpi=100)
-        self.ax1 = self.fig.add_subplot(2, 1, 1)
-        self.ax2 = self.fig.add_subplot(2, 1, 2)
+        # Create matplotlib figure with 3 subplots
+        self.fig = Figure(figsize=(12, 8), dpi=100)
+        gs = self.fig.add_gridspec(3, 1, height_ratios=[2, 1, 1])
+        self.ax1 = self.fig.add_subplot(gs[0])  # Magnitude response
+        self.ax2 = self.fig.add_subplot(gs[1])  # Phase response
+        self.ax3 = self.fig.add_subplot(gs[2])  # Window shape
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
         self.canvas.draw()
@@ -238,9 +240,9 @@ class FIRFilterGUI:
             self.num_coeffs.get(), self.cutoff1.get(), self.cutoff2.get(), self.sampling_freq.get()
         )
 
-        # Design filter
-        self.current_coeffs = self.filter_designer.design_filter(
-            self.filter_type.get(), num_coeffs, cutoff1, cutoff2
+        # Design filter and get window coefficients
+        self.current_coeffs, window_coeffs = self.filter_designer.design_filter(
+            self.filter_type.get(), num_coeffs, cutoff1, cutoff2, return_window=True
         )
 
         # Update coefficient display
@@ -272,6 +274,15 @@ class FIRFilterGUI:
         self.ax2.set_title('Phase Response')
         self.ax2.grid(True, alpha=0.3)
         self.ax2.set_xlim(0, fs/2)
+
+        # Plot window shape
+        self.ax3.clear()
+        n = np.arange(len(window_coeffs))
+        self.ax3.stem(n, window_coeffs, linefmt='C3-', markerfmt='C3o', basefmt='C3-')
+        self.ax3.set_xlabel('Sample')
+        self.ax3.set_ylabel('Amplitude')
+        self.ax3.set_title('Filter Window Shape')
+        self.ax3.grid(True, alpha=0.3)
 
         # Add cutoff frequency indicators
         cutoff1_hz = cutoff1 * fs / 2
