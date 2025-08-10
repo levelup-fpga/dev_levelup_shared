@@ -21,91 +21,46 @@ end entity scale_bits_flex;
 
 architecture rtl of scale_bits_flex is
 
-  -- Internal numeric signals
-  signal din_s  : signed(N-1 downto 0)   := (others => '0');
-  signal din_u  : unsigned(N-1 downto 0) := (others => '0');
-
-  signal dout_s : signed(M-1 downto 0)   := (others => '0');
-  signal dout_u : unsigned(M-1 downto 0) := (others => '0');
-
-  -- Internal combined output before pipeline
-  signal dout_comb : std_logic_vector(M-1 downto 0) := (others => '0');
-
-  -- Fixed-size array types based on PIPELINE (minimum 1 stage)
   type data_array  is array (0 to PIPELINE-1) of std_logic_vector(M-1 downto 0);
   type valid_array is array (0 to PIPELINE-1) of std_logic;
 
   signal data_pipe  : data_array  := (others => (others => '0'));
   signal valid_pipe : valid_array := (others => '0');
 
+  signal scaled_val : std_logic_vector(M-1 downto 0);
+
 begin
 
   ------------------------------------------------------------------
-  -- Input type casting
+  -- Scaling logic - implemented via concatenation or slicing
   ------------------------------------------------------------------
-  signed_input_gen : if SIGNED_MODE generate
-    din_s <= signed(din);
-    din_u <= (others => '0');  -- unused
+
+  upsize_signed : if SIGNED_MODE and (M > N) generate
+    scaled_val <= (din(N-1) & din(N-1 downto 0)) & (M-N-1 downto 0 => '0'); -- sign extend + append zeros
   end generate;
 
-  unsigned_input_gen : if not SIGNED_MODE generate
-    din_u <= unsigned(din);
-    din_s <= (others => '0');  -- unused
+  downsize_signed : if SIGNED_MODE and (M < N) generate
+    scaled_val <= din(N-1) & din(N-2 downto N-M); -- arithmetic right shift by (N-M)
   end generate;
 
-  ------------------------------------------------------------------
-  -- Scaling logic for SIGNED mode (corrected downscale order)
-  ------------------------------------------------------------------
-  signed_scale_gen : if SIGNED_MODE generate
+  same_signed : if SIGNED_MODE and (M = N) generate
+    scaled_val <= din;
+  end generate;
 
-    -- Upsize: multiply by 2^(M-N) (shift left after sign-extend)
-    upsize_signed : if M > N generate
-      dout_s <= shift_left(resize(din_s, M), M - N);
-    end generate;
+  upsize_unsigned : if (not SIGNED_MODE) and (M > N) generate
+    scaled_val <= din & (M-N-1 downto 0 => '0'); -- append zeros
+  end generate;
 
-    -- Downsize: divide by 2^(N-M) -> SHIFT FIRST on the N-bit value, THEN resize to M
-    downsize_signed : if M < N generate
-      dout_s <= resize( shift_right(din_s, N - M), M );
-    end generate;
+  downsize_unsigned : if (not SIGNED_MODE) and (M < N) generate
+    scaled_val <= din(N-1 downto N-M); -- logical right shift by (N-M)
+  end generate;
 
-    -- Same size: passthrough
-    same_size_signed : if M = N generate
-      dout_s <= din_s;
-    end generate;
-
-    dout_u <= (others => '0');  -- unused
+  same_unsigned : if (not SIGNED_MODE) and (M = N) generate
+    scaled_val <= din;
   end generate;
 
   ------------------------------------------------------------------
-  -- Scaling logic for UNSIGNED mode (corrected downscale order)
-  ------------------------------------------------------------------
-  unsigned_scale_gen : if not SIGNED_MODE generate
-
-    -- Upsize: multiply by 2^(M-N)
-    upsize_unsigned : if M > N generate
-      dout_u <= shift_left(resize(din_u, M), M - N);
-    end generate;
-
-    -- Downsize: divide by 2^(N-M) -> SHIFT FIRST on the N-bit value, THEN resize
-    downsize_unsigned : if M < N generate
-      dout_u <= resize( shift_right(din_u, N - M), M );
-    end generate;
-
-    -- Same size: passthrough
-    same_size_unsigned : if M = N generate
-      dout_u <= din_u;
-    end generate;
-
-    dout_s <= (others => '0');  -- unused
-  end generate;
-
-  ------------------------------------------------------------------
-  -- Output selection before pipeline
-  ------------------------------------------------------------------
-  dout_comb <= std_logic_vector(dout_s) when SIGNED_MODE else std_logic_vector(dout_u);
-
-  ------------------------------------------------------------------
-  -- Pipeline registers (always present since PIPELINE >= 1)
+  -- Pipeline registers
   ------------------------------------------------------------------
   process(clk, rst)
   begin
@@ -113,11 +68,9 @@ begin
       data_pipe  <= (others => (others => '0'));
       valid_pipe <= (others => '0');
     elsif rising_edge(clk) then
-      -- First stage captures the combinational result
-      data_pipe(0)  <= dout_comb;
+      data_pipe(0)  <= scaled_val;
       valid_pipe(0) <= din_valid;
 
-      -- Remaining stages shift forward
       for i in 1 to PIPELINE-1 loop
         data_pipe(i)  <= data_pipe(i-1);
         valid_pipe(i) <= valid_pipe(i-1);
@@ -126,9 +79,161 @@ begin
   end process;
 
   ------------------------------------------------------------------
-  -- Outputs (last pipeline stage)
+  -- Outputs
   ------------------------------------------------------------------
   dout       <= data_pipe(PIPELINE-1);
   dout_valid <= valid_pipe(PIPELINE-1);
 
 end architecture rtl;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--library ieee;
+--use ieee.std_logic_1164.all;
+--use ieee.numeric_std.all;
+--
+--entity scale_bits_flex is
+--  generic (
+--    N           : positive := 8;    -- input width
+--    M           : positive := 12;   -- output width
+--    SIGNED_MODE : boolean  := false; -- true = signed, false = unsigned
+--    PIPELINE    : positive := 1      -- number of pipeline stages, minimum 1
+--  );
+--  port (
+--    clk        : in  std_logic;
+--    rst        : in  std_logic;
+--    din        : in  std_logic_vector(N-1 downto 0);
+--    din_valid  : in  std_logic;
+--    dout       : out std_logic_vector(M-1 downto 0);
+--    dout_valid : out std_logic
+--  );
+--end entity scale_bits_flex;
+--
+--architecture rtl of scale_bits_flex is
+--
+--  -- Internal numeric signals
+--  signal din_s  : signed(N-1 downto 0)   := (others => '0');
+--  signal din_u  : unsigned(N-1 downto 0) := (others => '0');
+--
+--  signal dout_s : signed(M-1 downto 0)   := (others => '0');
+--  signal dout_u : unsigned(M-1 downto 0) := (others => '0');
+--
+--  -- Internal combined output before pipeline
+--  signal dout_comb : std_logic_vector(M-1 downto 0) := (others => '0');
+--
+--  -- Fixed-size array types based on PIPELINE (minimum 1 stage)
+--  type data_array  is array (0 to PIPELINE-1) of std_logic_vector(M-1 downto 0);
+--  type valid_array is array (0 to PIPELINE-1) of std_logic;
+--
+--  signal data_pipe  : data_array  := (others => (others => '0'));
+--  signal valid_pipe : valid_array := (others => '0');
+--
+--begin
+--
+--  ------------------------------------------------------------------
+--  -- Input type casting
+--  ------------------------------------------------------------------
+--  signed_input_gen : if SIGNED_MODE generate
+--    din_s <= signed(din);
+--    din_u <= (others => '0');  -- unused
+--  end generate;
+--
+--  unsigned_input_gen : if not SIGNED_MODE generate
+--    din_u <= unsigned(din);
+--    din_s <= (others => '0');  -- unused
+--  end generate;
+--
+--  ------------------------------------------------------------------
+--  -- Scaling logic for SIGNED mode (corrected downscale order)
+--  ------------------------------------------------------------------
+--  signed_scale_gen : if SIGNED_MODE generate
+--
+--    -- Upsize: multiply by 2^(M-N) (shift left after sign-extend)
+--    upsize_signed : if M > N generate
+--      dout_s <= shift_left(resize(din_s, M), M - N);
+--    end generate;
+--
+--    -- Downsize: divide by 2^(N-M) -> SHIFT FIRST on the N-bit value, THEN resize to M
+--    downsize_signed : if M < N generate
+--      dout_s <= resize( shift_right(din_s, N - M), M );
+--    end generate;
+--
+--    -- Same size: passthrough
+--    same_size_signed : if M = N generate
+--      dout_s <= din_s;
+--    end generate;
+--
+--    dout_u <= (others => '0');  -- unused
+--  end generate;
+--
+--  ------------------------------------------------------------------
+--  -- Scaling logic for UNSIGNED mode (corrected downscale order)
+--  ------------------------------------------------------------------
+--  unsigned_scale_gen : if not SIGNED_MODE generate
+--
+--    -- Upsize: multiply by 2^(M-N)
+--    upsize_unsigned : if M > N generate
+--      dout_u <= shift_left(resize(din_u, M), M - N);
+--    end generate;
+--
+--    -- Downsize: divide by 2^(N-M) -> SHIFT FIRST on the N-bit value, THEN resize
+--    downsize_unsigned : if M < N generate
+--      dout_u <= resize( shift_right(din_u, N - M), M );
+--    end generate;
+--
+--    -- Same size: passthrough
+--    same_size_unsigned : if M = N generate
+--      dout_u <= din_u;
+--    end generate;
+--
+--    dout_s <= (others => '0');  -- unused
+--  end generate;
+--
+--  ------------------------------------------------------------------
+--  -- Output selection before pipeline
+--  ------------------------------------------------------------------
+--  dout_comb <= std_logic_vector(dout_s) when SIGNED_MODE else std_logic_vector(dout_u);
+--
+--  ------------------------------------------------------------------
+--  -- Pipeline registers (always present since PIPELINE >= 1)
+--  ------------------------------------------------------------------
+--  process(clk, rst)
+--  begin
+--    if rst = '1' then
+--      data_pipe  <= (others => (others => '0'));
+--      valid_pipe <= (others => '0');
+--    elsif rising_edge(clk) then
+--      -- First stage captures the combinational result
+--      data_pipe(0)  <= dout_comb;
+--      valid_pipe(0) <= din_valid;
+--
+--      -- Remaining stages shift forward
+--      for i in 1 to PIPELINE-1 loop
+--        data_pipe(i)  <= data_pipe(i-1);
+--        valid_pipe(i) <= valid_pipe(i-1);
+--      end loop;
+--    end if;
+--  end process;
+--
+--  ------------------------------------------------------------------
+--  -- Outputs (last pipeline stage)
+--  ------------------------------------------------------------------
+--  dout       <= data_pipe(PIPELINE-1);
+--  dout_valid <= valid_pipe(PIPELINE-1);
+--
+--end architecture rtl;
+--
