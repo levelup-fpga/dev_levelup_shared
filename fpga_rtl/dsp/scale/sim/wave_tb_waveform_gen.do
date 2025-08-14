@@ -1,26 +1,20 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/SAMPLE_WIDTH
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/DEFAULT_WAVEFORM
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/SIGNED_OUTPUT
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/clk
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/rst_n
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/waveform_sel
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/start_samples
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/min_samples
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/max_samples
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/step_samples
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/change_period
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/sample_out
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/enable_sig
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/cnt_clk
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/cnt_enable
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/spp_current
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/spp_counter
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/phase_inc
-add wave -noupdate -radix hexadecimal /tb_waveform_gen/DUT/TWO_PI
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/clk
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/rst_n
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/enable_sig
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/phase_inc
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/waveform_sel
+add wave -noupdate -format Analog-Step -height 84 -max -1821.0 -min -1901.0 -radix decimal /tb_waveform_gen/sample_out
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/start_samples
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/min_samples
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/max_samples
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/step_samples
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/change_period
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/wave_ctrl
+add wave -noupdate -radix hexadecimal /tb_waveform_gen/SAMPLE_WIDTH_C
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {6518583 ns} 0}
+WaveRestoreCursors {{Cursor 1} {4345722 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 150
 configure wave -valuecolwidth 100
