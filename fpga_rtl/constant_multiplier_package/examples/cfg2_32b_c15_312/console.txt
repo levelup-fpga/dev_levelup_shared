@@ -1,0 +1,5 @@
+Shift-add: terms=4 depth=2 recommended=2 levels_per_stage=[1, 1, 0, 0]
+Wrote: /mnt/data/const_mult_package/examples/cfg2_32b_c15_312/const_mult_tree_mp_w32_c312_s4.vhd /mnt/data/const_mult_package/examples/cfg2_32b_c15_312/tb_const_mult_tree_mp_w32_c312_s4.vhd /mnt/data/const_mult_package/examples/cfg2_32b_c15_312/const_mult_tree_mp_w32_c312_s4_diagram.svg
+CSD: terms=3 depth=2 recommended=2 levels_per_stage=[1, 1, 0, 0]
+Wrote: /mnt/data/const_mult_package/examples/cfg2_32b_c15_312/const_mult_tree_cs_w32_c312_s4.vhd /mnt/data/const_mult_package/examples/cfg2_32b_c15_312/tb_const_mult_tree_cs_w32_c312_s4.vhd /mnt/data/const_mult_package/examples/cfg2_32b_c15_312/const_mult_tree_cs_w32_c312_s4_diagram.svg
+Done. Files in: /mnt/data/const_mult_package/examples/cfg2_32b_c15_312
