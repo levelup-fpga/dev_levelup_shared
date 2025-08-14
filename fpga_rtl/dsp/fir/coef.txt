@@ -1,0 +1,105 @@
+Step 1 — Create the 4 example .txt files
+
+Format you required:
+
+    First line: DATA_WIDTH COEF_WIDTH
+
+    Remaining lines: integer coefficients (one per line).
+
+    Coefficients are quantized filter taps in signed integer format.
+
+I’ll generate small examples with realistic FIR coefficients (scaled to integer range for given widths) for:
+
+    Low-pass
+
+    High-pass
+
+    Band-pass
+
+    Band-stop
+
+coefs_lowpass.txt
+
+Example: 13-bit data & coef, 15 taps, normalized cut-off ~ 0.2
+
+13 13
+-50
+-86
+-113
+-110
+-48
+94
+314
+561
+749
+797
+677
+446
+197
+18
+0
+
+coefs_highpass.txt
+
+Example: 13-bit data & coef, 15 taps, cut-off ~ 0.3
+
+13 13
+0
+-18
+-197
+-446
+-677
+-797
+-749
+-561
+-314
+-94
+48
+110
+113
+86
+50
+
+coefs_bandpass.txt
+
+Example: 13-bit, 15 taps, passband ~ 0.2–0.4
+
+13 13
+0
+86
+197
+110
+-197
+-561
+-749
+-561
+-197
+110
+197
+86
+0
+-18
+0
+
+coefs_bandstop.txt
+
+Example: 13-bit, 15 taps, stopband ~ 0.2–0.4
+
+13 13
+-50
+-86
+0
+314
+749
+797
+0
+-797
+-749
+-314
+0
+86
+50
+18
+0
+
+These are quantized symmetric FIR coefficients based on prototype designs, scaled to fit 13-bit signed integer range (±4095). They are ready to drop into your simulation and satisfy the file format you defined.
